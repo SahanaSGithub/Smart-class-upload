@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Upload Page</title>
+    <style>
+        body {
+            background-color: lightblue;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            background-color: darkblue;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid white;
+        }
+
+        h1 {
+            font-weight: bold;
+        }
+
+        .container {
+            background-color: white;
+            border: 2px solid darkblue;
+            padding: 30px;
+            width: 50%;
+            margin: 30px auto;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            font-weight: bold;
+            color: black;
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            margin: 20px 0;
+            border-radius: 5px;
+            border: 1px solid darkblue;
+        }
+
+        input[type="submit"] {
+            padding: 10px 20px;
+            font-weight: bold;
+            background-color: darkblue;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:disabled {
+            background-color: grey;
+            cursor: not-allowed;
+        }
+
+        #submission-status {
+            margin-top: 20px;
+            font-weight: bold;
+            color: black;
+        }
+
+        /* Add spacing and align text */
+        p,
+        h2 {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Smart Classroom Document Upload</h1>
+        <p id="date-time"></p>
+    </header>
+
+    <div class="container">
+        <h2>Submit Your Document</h2>
+
+        <form id="uploadForm">
+            <label for="fileUpload">Choose a file to upload:</label>
+            <br>
+            <input type="file" id="fileUpload" accept=".doc, .pdf, .png, .ppt">
+            <br>
+            <input type="submit" id="submitBtn" value="Upload" disabled>
+        </form>
+
+        <p id="submission-status"></p>
+    </div>
+
+    <script>
+        // Display current date and time in the header
+        function updateTime() {
+            const date = new Date();
+            const formattedDate = date.toLocaleString();
+            document.getElementById('date-time').innerText = 'Current Date and Time: ' + formattedDate;
+        }
+
+        setInterval(updateTime, 1000);
+
+        // Allow file upload if within the submission period
+        const uploadForm = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileUpload');
+        const submitBtn = document.getElementById('submitBtn');
+        const statusDisplay = document.getElementById('submission-status');
+
+        const deadline = new Date('2024-10-06T23:59:00'); // Set your deadline here
+
+        fileInput.addEventListener('change', function () {
+            // Enable the submit button only if a file is chosen
+            if (fileInput.files.length > 0) {
+                const now = new Date();
+                if (now <= deadline) {
+                    submitBtn.disabled = false;
+                } else {
+                    statusDisplay.innerText = 'The submission period is over. You cannot upload a file.';
+                    submitBtn.disabled = true;
+                }
+            }
+        });
+
+        uploadForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const now = new Date();
+            if (now <= deadline) {
+                // Record the time of submission and display it
+                const submissionTime = now.toLocaleString();
+                statusDisplay.innerText = `File uploaded successfully at ${submissionTime}.`;
+
+                // Prepare data for Excel export
+                const fileName = fileInput.files[0].name;
+                const submissionData = [
+                    ['File Name', 'Submission Time'],
+                    [fileName, submissionTime]
+                ];
+
+                exportToExcel(submissionData);
+
+                // Here you would send the file and data to the backend using AJAX, fetch or form submission
+                // Example: uploadFileToBackend(fileInput.files[0], submissionTime);
+            } else {
+                statusDisplay.innerText = 'Submission deadline has passed. File upload is rejected.';
+            }
+        });
+
+        // Function to export data to Excel
+        function exportToExcel(data) {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            data.forEach(row => {
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "submission_data.csv");
+            document.body.appendChild(link);
+            link.click();
+        }
+    </script>
+
+</body>
+
+</html>
